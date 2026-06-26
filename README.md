@@ -98,6 +98,26 @@ Upcoming:
 - Demand Forecasting
 - AI Inventory Assistant
 
+## Screenshots
+
+Coming Soon
+
+- Dashboard
+- Sales Analytics
+- AI Assistant
+
+## Skills Demonstrated
+
+- Database Design
+- Object-Oriented Programming
+- SQLAlchemy ORM
+- CRUD Operations
+- Dashboard Development
+- Git Version Control
+- GitHub Repository Management
+- Python Backend Development
+- Data Visualization
+
 ## Author
 
 Muhammad Ansar
