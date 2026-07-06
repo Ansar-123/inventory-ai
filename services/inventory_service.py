@@ -103,3 +103,66 @@ def record_sale(
     db.commit()
 
     print("Sale recorded successfully")
+
+def update_product(
+    product_id,
+    name,
+    category,
+    price,
+    reorder_level
+):
+    product = db.query(Product).filter(
+        Product.id == product_id
+    ).first()
+
+    if not product:
+        print("Product not found")
+        return
+
+    product.name = name
+    product.category = category
+    product.price = price
+    product.reorder_level = reorder_level
+
+    db.commit()
+
+    print("Product updated successfully")
+def delete_product(product_id):
+
+    product = db.query(Product).filter(
+        Product.id == product_id
+    ).first()
+
+    if not product:
+        print("Product not found")
+        return False
+
+    inventory = db.query(Inventory).filter(
+        Inventory.product_id == product_id
+    ).first()
+
+    if inventory:
+        print("Cannot delete. Product exists in inventory.")
+        return False
+
+    sales = db.query(Sale).filter(
+        Sale.product_id == product_id
+    ).first()
+
+    if sales:
+        print("Cannot delete. Product has sales history.")
+        return False
+
+    transaction = db.query(InventoryTransaction).filter(
+        InventoryTransaction.product_id == product_id
+    ).first()
+
+    if transaction:
+        print("Cannot delete. Product has transaction history.")
+        return False
+
+    db.delete(product)
+    db.commit()
+
+    print("Product deleted successfully")
+    return True
