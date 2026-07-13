@@ -19,6 +19,9 @@ from services.inventory_service import (
     update_product,
     delete_product
 )
+from client.api_client import get_products
+from analytics.revenue_analytics import get_revenue_by_product
+from analytics.inventory_analytics import get_inventory_value
 
 st.title("AI Inventory Management System")
 
@@ -29,10 +32,10 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "Management"
 ])
 db = SessionLocal()
-products = db.query(Product).all()
+products = get_products()
 
 product_dict = {
-    product.name: product.id
+    product["name"]: product["id"]
     for product in products
 }
 st.subheader("Add New Product")
@@ -279,11 +282,11 @@ product_data = []
 
 for product in products:
     product_data.append({
-        "ID": product.id,
-        "Name": product.name,
-        "Category": product.category,
-        "Price": product.price,
-        "Reorder Level": product.reorder_level
+        "ID": product["id"],
+        "Name": product["name"],
+        "Category": product["category"],
+        "Price": product["price"],
+        "Reorder Level": product["reorder_level"]
     })
 
 df = pd.DataFrame(product_data)
@@ -306,15 +309,15 @@ low_stock_products = []
 for product in products:
 
     inventory_item = db.query(Inventory).filter(
-        Inventory.product_id == product.id
+        Inventory.product_id == product["id"]
     ).first()
 
-    if inventory_item and inventory_item.quantity <= product.reorder_level:
+    if inventory_item and inventory_item.quantity <= product["reorder_level"]:
 
         low_stock_products.append({
-            "Product": product.name,
+            "Product": product["name"],
             "Current Stock": inventory_item.quantity,
-            "Reorder Level": product.reorder_level
+            "Reorder Level": product["reorder_level"]
         })
 
 if low_stock_products:
@@ -334,7 +337,7 @@ inventory_data = []
 for product in products:
 
     inventory_item = db.query(Inventory).filter(
-        Inventory.product_id == product.id
+        Inventory.product_id == product["id"]
     ).first()
 
     current_stock = (
@@ -345,14 +348,14 @@ for product in products:
 
     status = (
         "Low Stock"
-        if current_stock <= product.reorder_level
+        if current_stock <= product["reorder_level"]
         else "Normal"
     )
 
     inventory_data.append({
-        "Product": product.name,
+        "Product": product["name"],
         "Current Stock": current_stock,
-        "Reorder Level": product.reorder_level,
+        "Reorder Level": product["reorder_level"],
         "Status": status
     })
 
@@ -429,3 +432,67 @@ if not sales_df.empty:
 else:
 
     st.info("No sales data available.")
+
+st.subheader("Revenue by Product")
+
+revenue_df = get_revenue_by_product(db)
+
+if not revenue_df.empty:
+
+    revenue_chart = px.bar(
+        revenue_df,
+        x="Product",
+        y="Revenue",
+        text="Revenue",
+        color="Revenue",
+        title="Revenue by Product"
+    )
+
+    revenue_chart.update_traces(
+        textposition="outside"
+    )
+
+    st.plotly_chart(
+        revenue_chart,
+        use_container_width=True
+    )
+
+else:
+
+    st.info("No revenue data available.")
+
+st.subheader("Inventory Value Analysis")
+
+inventory_value_df, total_inventory_value = get_inventory_value(db)
+
+st.metric(
+    "Total Inventory Value",
+    f"₹{total_inventory_value:,.2f}"
+)
+
+st.dataframe(inventory_value_df)
+
+inventory_value_chart = px.bar(
+    inventory_value_df,
+    x="Product",
+    y="Inventory Value",
+    text="Inventory Value",
+    color="Inventory Value",
+    title="Inventory Value by Product"
+)
+
+inventory_value_chart.update_traces(
+    textposition="outside"
+)
+
+inventory_value_chart.update_layout(
+    xaxis_title="Product",
+    yaxis_title="Inventory Value (₹)",
+    title_x=0.25,
+    height=500
+)
+
+st.plotly_chart(
+    inventory_value_chart,
+    use_container_width=True
+)
